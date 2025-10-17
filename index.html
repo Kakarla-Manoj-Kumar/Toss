@@ -84,12 +84,20 @@
             transform-style: preserve-3d;
             transition: transform 0.5s;
         }
-        .coin-heads {
+        /* Standardized appearance for Heads and Tails result states */
+        .coin-heads, .coin-tails-final {
             background: linear-gradient(135deg, #FFD700 0%, #FFCC00 50%, #FFD700 100%);
         }
+        
+        /* Apply 180deg rotation only for the flip effect. Removed redundant background property here. */
         .coin-tails {
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%);
             transform: rotateY(180deg);
+        }
+        
+        /* FIX: Counter-rotate the content of the Tails side to prevent mirroring */
+        .coin-tails span {
+            transform: rotateY(180deg); 
+            display: block; 
         }
         
         /* --- UTILITY & ANIMATIONS --- */
@@ -144,7 +152,7 @@
     </div>
 
     <footer class="mt-8 text-sm text-gray-400">
-        Built by Masternext 
+        Built by MasterNext 
     </footer>
 
     <div id="confetti-container" class="confetti-wrapper"></div>
@@ -250,7 +258,8 @@
             const { result, isFlipping } = appState.teamToss;
             if (isFlipping) return 'animate-spin-fast shadow-xl';
             if (result === 'Heads') return 'coin-heads rotate-y-0';
-            if (result === 'Tails') return 'coin-tails rotate-y-180';
+            // Use 'coin-tails-final' for the appearance of the result, but keep the rotation for the element
+            if (result === 'Tails') return 'coin-tails-final coin-tails'; 
             return 'coin-base';
         }
 
@@ -280,7 +289,12 @@
             if (result) {
                 message = `${result}!`;
                 messageClass = `text-3xl sm:text-4xl font-black ${result === 'Heads' ? 'text-indigo-600' : 'text-green-600'} animate-bounce-custom`;
-                coinContent = `<span class="drop-shadow-md">${result}</span>`;
+                
+                // Content needs to be counter-rotated if it's Tails
+                // This targets the specific span *inside* the coin with the required counter-rotation
+                const counterRotateClass = result === 'Tails' ? 'coin-tails span' : '';
+                coinContent = `<span class="drop-shadow-md ${counterRotateClass}">${result}</span>`;
+            
             } else if (isFlipping) {
                 message = 'Toss in progress...';
                 messageClass = 'text-xl text-indigo-500 font-semibold';
@@ -386,14 +400,14 @@
             const newDrawn = [...appState.singlesToss.drawnNumbers, nextNumber];
             const newQueue = appState.singlesToss.drawQueue.slice(1);
             
-            const drawIndex = appState.singlesToss.drawnNumbers.length; 
+            // NOTE: We don't need drawIndex anymore, but nextNumber is required.
             
             appState.singlesToss.drawnNumbers = newDrawn;
             appState.singlesToss.drawQueue = newQueue;
             renderApp();
 
-            // Trigger confetti for the 1st (index 0), and 2nd (index 1) draw only.
-            if (drawIndex === 0 || drawIndex === 1) {
+            // Trigger confetti only when the drawn number is 1.
+            if (nextNumber === 1) {
                 triggerConfetti();
             }
         }
@@ -546,6 +560,3 @@
     </script>
 </body>
 </html>
-
-
-
